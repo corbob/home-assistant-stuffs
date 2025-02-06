@@ -1,0 +1,86 @@
+- id: '1738520607357'
+  alias: Meeting Starting
+  description: ''
+  triggers:
+  - trigger: calendar
+    entity_id: calendar.cory
+    event: start
+    offset: -0:1:0
+  - trigger: calendar
+    entity_id: calendar.cory
+    event: start
+    offset: -0:5:0
+  - trigger: calendar
+    entity_id: calendar.cory
+    event: start
+    offset: -0:15:0
+  conditions:
+  - condition: template
+    value_template: '{{ ''#NoAutomation'' not in trigger.calendar_event.description
+      }}'
+  - condition: template
+    value_template: '{{ states.input_boolean.do_not_disturb.state == ''off'' }}'
+  actions:
+  - action: tts.speak
+    metadata: {}
+    data:
+      media_player_entity_id: media_player.office_speaker
+      message: Meeting {{ trigger.calendar_event.summary }} is starting in {{ time_until(as_datetime(trigger.calendar_event.start))
+        }} at {{ as_datetime(trigger.calendar_event.start).astimezone().time().strftime('%I:%M%p')
+        }}
+    target:
+      entity_id: tts.home_assistant_cloud
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+  mode: queued
+  max: 10
+- id: '1738717226100'
+  alias: Automation Calendar
+  description: ''
+  triggers:
+  - trigger: calendar
+    entity_id: calendar.automations
+    event: start
+    offset: -0:0:0
+  conditions: []
+  actions:
+  - if:
+    - condition: template
+      value_template: '{{ ''#LightsOn'' in trigger.calendar_event.summary }}'
+    then:
+    - action: switch.turn_on
+      metadata: {}
+      data: {}
+      target:
+        entity_id: switch.desk_light
+  - if:
+    - condition: template
+      value_template: '{{ ''#LightsOff'' in trigger.calendar_event.summary }}'
+    then:
+    - action: switch.turn_off
+      metadata: {}
+      data: {}
+      target:
+        entity_id: switch.desk_light
+  - if:
+    - condition: template
+      value_template: '{{ ''#DndOn'' in trigger.calendar_event.summary }}'
+    then:
+    - action: input_boolean.turn_on
+      metadata: {}
+      data: {}
+      target:
+        entity_id: input_boolean.do_not_disturb
+  - if:
+    - condition: template
+      value_template: '{{ ''#DndOff'' in trigger.calendar_event.summary }}'
+    then:
+    - action: input_boolean.turn_off
+      metadata: {}
+      data: {}
+      target:
+        entity_id: input_boolean.do_not_disturb
+  mode: queued
+  max: 10
